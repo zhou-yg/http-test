@@ -12,26 +12,46 @@ app.use(async function(ctx)  {
       ctx.body = fs.readFileSync('./index.html').toString();
       break;
     case '/test.js':
-      const js = fs.readFileSync('./test.js').toString();
+      var js = fs.readFileSync('./test.js').toString();
       const md5Str = md5(js);
       if (md5Str === ctx.get('If-None-Match')) {
         ctx.status = 304;
         ctx.set({
-          'Cache-Control': 'max-age=60',
+          'Cache-Control': 'max-age=20',
         })
       } else {
         ctx.set({
           'Cache-Control': 'no-cache',
         })
       }
-
       ctx.set({
         'ETag': md5Str,
       })
       ctx.body = js;
       break;
+    case '/test2.js':
+      var js = fs.readFileSync('./test2.js').toString();
+      if (ctx.get('If-Modified-Since')) {
+        var sinceDate = new Date(ctx.get('If-Modified-Since'));
+        var lastModified = new Date('2017-11-14 17:35:30');
+
+        if (sinceDate >= new Date()) {
+          ctx.status = 304;
+          ctx.set({
+            'Last-Modified': sinceDate,
+          })
+        } else {
+          ctx.set({
+            'Last-Modified': lastModified,
+          })
+        }
+      } else {
+        ctx.set({
+          'Last-Modified': new Date(),
+        })
+      }
+      ctx.body = js;
+      break;
   }
 })
-
-
 app.listen(3004);
